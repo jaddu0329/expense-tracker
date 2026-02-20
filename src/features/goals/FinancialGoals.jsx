@@ -151,7 +151,7 @@ function GoalCard({ goal, dispatch }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-black tabular-nums ${goal.isAchieved ? 'text-emerald-500' : 'text-indigo-600'}`}>
+          <span className={`text-xs font-black tabular-nums ${goal.isAchieved ? 'text-[#16A34A]' : 'text-[#22C55E]'}`}>
             {goal.progressPct}%
           </span>
           <button
@@ -166,7 +166,7 @@ function GoalCard({ goal, dispatch }) {
       {/* Progress Bar */}
       <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
         <div
-          className={`h-full rounded-full transition-all duration-700 ${goal.isAchieved ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+          className={`h-full rounded-full transition-all duration-700 ${goal.isAchieved ? 'bg-[#16A34A]' : 'bg-[#22C55E]'}`}
           style={{ width: `${goal.progressPct}%` }}
         />
       </div>

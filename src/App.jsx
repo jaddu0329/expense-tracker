@@ -97,7 +97,7 @@ function AppShell() {
         onFilterOpen={() => setFilterOpen(true)}
         onIncomeModal={() => setIncomeModal(true)}
       />
-      <TabBar activeTab={state.activeTab} dispatch={dispatch} />
+      <TabBar activeTab={state.activeTab} dispatch={dispatch} theme={state.theme} />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {state.activeTab === 'dashboard'     && <DashboardTab    state={state} dispatch={dispatch} onShowHistory={() => setHistoryOpen(true)} onEdit={(t) => { setEditingTx(t); setModalOpen(true); }} />}
@@ -149,27 +149,31 @@ function TopNav({ state, dispatch, onAdd, onFilterOpen, onIncomeModal }) {
   const stats = useMemo(() => computeStats(state.transactions, state.incomeTarget), [state.transactions, state.incomeTarget]);
   const score = useMemo(() => computeSavingsScore(stats), [stats]);
   return (
-    <header className="sticky top-0 z-20 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
+    <header className="sticky top-0 z-[1000] shadow-lg" style={{ background: 'linear-gradient(135deg, #5B2EFF, #8E54E9)' }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-indigo-500/20"><Wallet size={22} /></div>
-          <h1 className="text-xl font-black tracking-tight hidden sm:block">FinTrack<span className="text-indigo-600">Pro</span></h1>
+          <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg text-white shadow-lg shadow-black/10"><Wallet size={22} /></div>
+          <h1 className="text-xl font-black tracking-tight text-white hidden sm:block">FinTrack<span className="text-white/70">Pro</span></h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-black" style={{ color: score.color, borderColor: `${score.color}44`, background: `${score.color}11` }}>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/25 bg-white/15 text-white text-xs font-black">
             <Zap size={11} fill="currentColor" /> Score: {score.total}
           </div>
-          <button onClick={onIncomeModal} className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-black text-sm transition-all hover:bg-emerald-200">
+          <button
+            onClick={onIncomeModal}
+            className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-black text-sm shadow-lg shadow-green-700/30 active:scale-95 transition-all duration-200 ease-in-out hover:brightness-110"
+            style={{ background: 'linear-gradient(135deg, #22C55E, #16A34A)' }}
+          >
             <Target size={15} /> Set Goal
           </button>
-          <button onClick={onFilterOpen} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
+          <button onClick={onFilterOpen} className="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white transition-colors border border-white/10">
             <Filter size={18} />
           </button>
           <ExportMenu transactions={state.transactions} categories={state.categories} stats={stats} score={score} />
-          <button onClick={() => dispatch({ type: 'TOGGLE_THEME' })} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
+          <button onClick={() => dispatch({ type: 'TOGGLE_THEME' })} className="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white transition-colors border border-white/10">
             {state.theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          <button onClick={onAdd} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-black shadow-lg shadow-indigo-500/20 active:scale-95 transition-all text-sm">
+          <button onClick={onAdd} className="bg-white text-[#5B2EFF] hover:bg-white/90 px-5 py-2.5 rounded-xl flex items-center gap-2 font-black shadow-lg shadow-black/20 active:scale-95 transition-all text-sm">
             <Plus size={18} /><span className="hidden sm:inline">Add Record</span>
           </button>
         </div>
@@ -178,22 +182,38 @@ function TopNav({ state, dispatch, onAdd, onFilterOpen, onIncomeModal }) {
   );
 }
 
-function TabBar({ activeTab, dispatch }) {
+function TabBar({ activeTab, dispatch, theme }) {
+  const isDark = theme === 'dark';
   return (
-    <div className="sticky top-16 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div
+      className="sticky top-16 z-[900] transition-colors duration-300"
+      style={{
+        background: isDark ? '#0F172A' : '#FFFFFF',
+        borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.06)',
+        boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex gap-1 overflow-x-auto">
           {TABS.map(tab => {
             const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            const activeColor = isDark ? '#8B5CF6' : '#5B2EFF';
+            const inactiveColor = isDark ? '#94A3B8' : '#64748B';
             return (
               <button
                 key={tab.id}
                 onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', payload: tab.id })}
-                className={`flex items-center gap-2 px-5 py-3.5 text-xs font-black uppercase tracking-wider whitespace-nowrap border-b-2 transition-all ${
-                  activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                className={`relative flex items-center gap-2 px-5 py-3.5 text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-200 ${
+                  isActive ? '' : isDark ? 'hover:text-[#8B5CF6]' : 'hover:text-[#5B2EFF]'
                 }`}
+                style={{ color: isActive ? activeColor : inactiveColor }}
               >
-                <Icon size={14} />{tab.label}
+                {/* Active indicator: purple underline */}
+                {isActive && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full pointer-events-none" style={{ background: activeColor }} />
+                )}
+                <span className="relative z-10 flex items-center gap-2"><Icon size={14} />{tab.label}</span>
               </button>
             );
           })}
@@ -243,12 +263,13 @@ function DashboardTab({ state, dispatch, onShowHistory }) {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg,#1FB874,#119E62)', boxShadow: '0 10px 30px rgba(31,184,116,0.3)', border: '1px solid rgba(31,184,116,0.25)', borderRadius: '16px', transition: 'all 0.3s' }}
+          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.05) 40%, transparent 55%), linear-gradient(135deg, #16A34A, #22C55E, #15803D)', boxShadow: '0 10px 30px rgba(31,184,116,0.3)', border: '1px solid rgba(31,184,116,0.25)', borderRadius: '16px', overflow: 'hidden', isolation: 'isolate', transition: 'all 0.3s' }}
             onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(31,184,116,0.4)';}}
-            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(31,184,116,0.3)';}}>
+            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(31,184,116,0.3)';}}>            
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#22C55E' }} />
             <div className="flex justify-between items-start mb-6 relative z-10">
               <div className="p-2 bg-white/20 rounded-2xl shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
-                <img src={moneyBagImg} alt="Income" className="w-10 h-10 object-contain" />
+                <img src={moneyBagImg} alt="Income" className="w-8 h-8 object-contain" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full text-[10px] font-black uppercase tracking-wider">
                 <Zap size={10} fill="currentColor" /> {stats.incomeAchievement}%
@@ -261,11 +282,11 @@ function DashboardTab({ state, dispatch, onShowHistory }) {
             </div>
           </div>
 
-          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg,#5B2EFF,#8E54E9)', boxShadow: '0 10px 30px rgba(91,46,255,0.35)', border: '1px solid rgba(142,84,233,0.25)', borderRadius: '16px', transition: 'all 0.3s' }}
-            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(91,46,255,0.5)';}}
-            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(91,46,255,0.35)';}}>
+          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.05) 40%, transparent 55%), linear-gradient(135deg, #B8860B, #FFD700, #7A5600)', boxShadow: '0 10px 30px rgba(184,134,11,0.35)', border: '1px solid rgba(255,215,0,0.25)', borderRadius: '16px', overflow: 'hidden', isolation: 'isolate', transition: 'all 0.3s' }}
+            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(184,134,11,0.5)';}}
+            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(184,134,11,0.35)';}}>
             {/* Background glow blob */}
-            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#c4b5fd' }} />
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#FFD700' }} />
             <div className="flex justify-between items-start mb-6 relative z-10">
               <div className="p-2 bg-white/20 rounded-2xl shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
                 <span className="w-8 h-8 flex items-center justify-center text-[2rem] leading-none" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>📈</span>
@@ -281,17 +302,25 @@ function DashboardTab({ state, dispatch, onShowHistory }) {
             </div>
           </div>
 
-          <div className={`p-6 rounded-3xl border shadow-sm card-glow ${stats.balance >= 0 ? 'bg-gradient-to-br from-indigo-50/50 to-white dark:from-slate-900 dark:to-indigo-900/10 border-indigo-100 dark:border-indigo-900/30' : 'bg-gradient-to-br from-rose-50/50 to-white dark:from-slate-900 dark:to-rose-900/10 border-rose-100 dark:border-rose-900/30'}`}>
-            <div className="flex justify-between items-start mb-4">
-              <div className={`p-2 rounded-lg ${stats.balance >= 0 ? 'bg-indigo-100 dark:bg-indigo-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}>
-                <span className="text-2xl">{stats.balance >= 0 ? '' : ''}</span>
+          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.05) 40%, transparent 55%), linear-gradient(135deg, #5B2EFF, #8E54E9, #3B1A99)', boxShadow: '0 10px 30px rgba(91,46,255,0.35)', border: '1px solid rgba(142,84,233,0.25)', borderRadius: '16px', overflow: 'hidden', isolation: 'isolate', transition: 'all 0.3s' }}
+            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(91,46,255,0.5)';}}
+            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(91,46,255,0.35)';}}>            
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#c4b5fd' }} />
+            <div className="flex justify-between items-start mb-6 relative z-10">
+              <div className="p-2 bg-white/20 rounded-2xl shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
+                <span className="w-8 h-8 flex items-center justify-center text-[2rem] leading-none" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>🏦</span>
               </div>
-              <span className={`text-xs font-bold ${stats.balance >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>{stats.savingsRate}% Rate</span>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full text-[10px] font-black uppercase tracking-wider">
+                <Zap size={10} fill="currentColor" /> {stats.savingsRate}% Rate
+              </div>
             </div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Net Savings</p>
-            <h3 className={`text-2xl font-bold tracking-tight tnum ${stats.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-              {stats.balance < 0 ? '-' : ''}{formatINR(Math.abs(stats.balance))}
-            </h3>
+            <div className="relative z-10">
+              <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em] mb-1">Net Savings</p>
+              <h3 className="text-3xl font-black text-white tnum">
+                {stats.balance < 0 ? '-' : ''}{formatINR(Math.abs(stats.balance))}
+              </h3>
+              <p className="text-[10px] text-white/60 font-bold mt-1">{stats.savingsRate >= 20 ? 'Target Achieved ✓' : 'Target: 20% Rate'}</p>
+            </div>
           </div>
         </div>
 
@@ -441,7 +470,7 @@ function AnalyticsTab({ state, dispatch }) {
       </div>
       <div className="lg:col-span-4 space-y-6">
         <SavingsScore score={score} />
-        <NetWorthTracker assets={state.assets} liabilities={state.liabilities} transactions={state.transactions} dispatch={dispatch} />
+        <NetWorthTracker assets={state.assets} liabilities={state.liabilities} transactions={state.transactions} dispatch={dispatch} netWorthHistory={state.netWorthHistory} />
       </div>
     </div>
   );

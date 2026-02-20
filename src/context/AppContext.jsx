@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { format } from 'date-fns';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 export const INITIAL_CATEGORIES = [
@@ -32,6 +33,7 @@ const makeInitialState = () => ({
   goals:           load('et_goals', []),
   assets:          load('et_assets', []),
   liabilities:     load('et_liabilities', []),
+  netWorthHistory: load('et_nw_history', []),
   activeTab:       'dashboard',
   comparisonMode:  'thisMonth',   // 'thisMonth' | 'lastMonth' | 'custom'
   comparisonRange: { start: '', end: '' },
@@ -48,6 +50,21 @@ const makeInitialState = () => ({
 });
 
 const initialState = makeInitialState();
+
+// ─── NET WORTH HISTORY HELPERS ────────────────────────────────────────────────
+/** Returns the current month key in 'MMM yy' format, e.g. "Feb 26" */
+const curMonthKey = () => format(new Date(), 'MMM yy');
+
+/** Upsert current-month snapshot; past months are never touched */
+const upsertNWHistory = (history, monthKey, netWorth) => [
+  ...(history || []).filter(h => h.month !== monthKey),
+  { month: monthKey, netWorth },
+];
+
+/** Compute net worth from asset and liability arrays */
+const calcNW = (assets, liabilities) =>
+  assets.reduce((s, a) => s + Number(a.value || 0), 0)
+  - liabilities.reduce((s, l) => s + Number(l.value || 0), 0);
 
 // ─── REDUCER ───────────────────────────────────────────────────────────────────
 function reducer(state, action) {
@@ -102,16 +119,44 @@ function reducer(state, action) {
       return { ...state, goals: state.goals.filter(g => g.id !== action.payload) };
 
     // Net Worth: Assets
-    case 'ADD_ASSET':
-      return { ...state, assets: [...state.assets, action.payload] };
-    case 'DELETE_ASSET':
-      return { ...state, assets: state.assets.filter(a => a.id !== action.payload) };
+    case 'ADD_ASSET': {
+      const newAssets = [...state.assets, action.payload];
+      const mk = curMonthKey();
+      return {
+        ...state,
+        assets: newAssets,
+        netWorthHistory: upsertNWHistory(state.netWorthHistory, mk, calcNW(newAssets, state.liabilities)),
+      };
+    }
+    case 'DELETE_ASSET': {
+      const newAssets = state.assets.filter(a => a.id !== action.payload);
+      const mk = curMonthKey();
+      return {
+        ...state,
+        assets: newAssets,
+        netWorthHistory: upsertNWHistory(state.netWorthHistory, mk, calcNW(newAssets, state.liabilities)),
+      };
+    }
 
     // Net Worth: Liabilities
-    case 'ADD_LIABILITY':
-      return { ...state, liabilities: [...state.liabilities, action.payload] };
-    case 'DELETE_LIABILITY':
-      return { ...state, liabilities: state.liabilities.filter(l => l.id !== action.payload) };
+    case 'ADD_LIABILITY': {
+      const newLiabs = [...state.liabilities, action.payload];
+      const mk = curMonthKey();
+      return {
+        ...state,
+        liabilities: newLiabs,
+        netWorthHistory: upsertNWHistory(state.netWorthHistory, mk, calcNW(state.assets, newLiabs)),
+      };
+    }
+    case 'DELETE_LIABILITY': {
+      const newLiabs = state.liabilities.filter(l => l.id !== action.payload);
+      const mk = curMonthKey();
+      return {
+        ...state,
+        liabilities: newLiabs,
+        netWorthHistory: upsertNWHistory(state.netWorthHistory, mk, calcNW(state.assets, newLiabs)),
+      };
+    }
 
     // Navigation
     case 'SET_ACTIVE_TAB':
@@ -145,16 +190,17 @@ export function AppProvider({ children }) {
     localStorage.setItem('et_budget',        JSON.stringify(state.budget));
     localStorage.setItem('et_income_target', JSON.stringify(state.incomeTarget));
     localStorage.setItem('et_theme',         state.theme);
-    localStorage.setItem('et_goals',         JSON.stringify(state.goals));
-    localStorage.setItem('et_assets',        JSON.stringify(state.assets));
-    localStorage.setItem('et_liabilities',   JSON.stringify(state.liabilities));
+    localStorage.setItem('et_goals',           JSON.stringify(state.goals));
+    localStorage.setItem('et_assets',          JSON.stringify(state.assets));
+    localStorage.setItem('et_liabilities',     JSON.stringify(state.liabilities));
+    localStorage.setItem('et_nw_history',      JSON.stringify(state.netWorthHistory));
 
     if (state.theme === 'dark') document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [
     state.transactions, state.categories, state.budget,
     state.incomeTarget, state.theme, state.goals,
-    state.assets, state.liabilities,
+    state.assets, state.liabilities, state.netWorthHistory,
   ]);
 
   // Process recurring transactions

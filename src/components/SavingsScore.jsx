@@ -12,17 +12,17 @@ export default function SavingsScore({ score }) {
   const offset = circ - (total / 100) * circ;
 
   const breakdownItems = [
-    { label: 'Budget Adherence', pts: breakdown.budgetScore,  max: 25 },
-    { label: 'Savings Rate',     pts: breakdown.savingsScore, max: 25 },
-    { label: 'Investments',      pts: breakdown.investScore,  max: 25 },
-    { label: 'Emergency Buffer', pts: breakdown.bufferScore,  max: 25 },
+    { label: 'Budget Adherence', pts: breakdown.budgetScore,  max: 25, barColor: null },
+    { label: 'Savings Rate',     pts: breakdown.savingsScore, max: 25, barColor: '#22C55E' },
+    { label: 'Investments',      pts: breakdown.investScore,  max: 25, barColor: '#8E54E9' },
+    { label: 'Emergency Buffer', pts: breakdown.bufferScore,  max: 25, barColor: null },
   ];
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
       <div className="p-6 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl">
+          <div className="p-2 rounded-xl text-white" style={{ background: 'linear-gradient(135deg, #16A34A, #22C55E)', boxShadow: '0 4px 12px rgba(22,163,74,0.35)' }}>
             <Zap size={16} fill="currentColor" />
           </div>
           <div>
@@ -74,14 +74,14 @@ export default function SavingsScore({ score }) {
         <div className="space-y-3">
           {breakdownItems.map(item => (
             <div key={item.label}>
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
-                <span>{item.label}</span>
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider mb-1">
+                <span className="text-slate-400">{item.label}</span>
                 <span className="text-slate-600 dark:text-slate-300">{item.pts}/{item.max}</span>
               </div>
               <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${(item.pts / item.max) * 100}%`, backgroundColor: color }}
+                  style={{ width: `${(item.pts / item.max) * 100}%`, backgroundColor: item.barColor || color }}
                 />
               </div>
             </div>

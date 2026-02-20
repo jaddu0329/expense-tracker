@@ -7,7 +7,7 @@ export default function AchievementBadges({ achievements }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
       <div className="flex items-center gap-3 p-6 border-b border-slate-100 dark:border-slate-800">
-        <div className="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl">
+        <div className="p-2 rounded-xl text-white" style={{ background: 'linear-gradient(135deg, #B8860B, #FFD700)', boxShadow: '0 4px 12px rgba(184,134,11,0.35)' }}>
           <Award size={16} />
         </div>
         <div>
@@ -27,10 +27,13 @@ export default function AchievementBadges({ achievements }) {
               animationDelay: `${i * 60}ms`,
               animationFillMode: 'both',
               background: a.earned
-                ? 'linear-gradient(135deg, #fffbeb, #fef3c7)'
+                ? 'linear-gradient(135deg, #B8860B, #FFD700)'
                 : undefined,
               border: a.earned
-                ? '1px solid #fde68a'
+                ? '1px solid rgba(255,215,0,0.4)'
+                : undefined,
+              boxShadow: a.earned
+                ? '0 6px 20px rgba(184,134,11,0.3)'
                 : undefined,
             }}
           >
@@ -40,20 +43,20 @@ export default function AchievementBadges({ achievements }) {
                   ? 'scale-110'
                   : 'grayscale opacity-40'
               }`}
-              style={{ background: a.earned ? 'linear-gradient(135deg, #f59e0b, #d97706)' : '#f1f5f9' }}
+              style={{ background: a.earned ? 'rgba(255,255,255,0.25)' : '#f1f5f9', border: a.earned ? '1px solid rgba(255,255,255,0.3)' : undefined }}
             >
               {a.emoji}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs font-black uppercase tracking-wider truncate ${a.earned ? 'text-amber-800' : 'text-slate-400'}`}>
+              <p className={`text-xs font-black uppercase tracking-wider truncate ${a.earned ? 'text-white' : 'text-slate-400'}`}>
                 {a.title}
               </p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+              <p className={`text-[10px] mt-0.5 leading-relaxed ${a.earned ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
                 {a.desc}
               </p>
             </div>
             {a.earned && (
-              <span className="text-[9px] font-black uppercase tracking-widest bg-amber-400 text-amber-900 px-2 py-1 rounded-full flex-shrink-0">
+              <span className="text-[9px] font-black uppercase tracking-widest bg-white/25 text-white border border-white/30 px-2 py-1 rounded-full flex-shrink-0">
                 Unlocked
               </span>
             )}

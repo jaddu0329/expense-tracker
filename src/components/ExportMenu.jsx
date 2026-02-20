@@ -40,7 +40,7 @@ export default function ExportMenu({ transactions, categories, stats, score }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-black shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+        className="flex items-center gap-2 px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-sm font-black border border-white/10 active:scale-95 transition-all"
       >
         <Download size={14} />
         Export

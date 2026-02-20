@@ -2,10 +2,26 @@ import React, { useState } from 'react';
 import { Zap, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SEVERITY_STYLES = {
-  danger:  { bg: 'bg-rose-50 dark:bg-rose-900/20',    border: 'border-rose-200 dark:border-rose-800',    dot: 'bg-rose-500',    text: 'text-rose-700 dark:text-rose-300' },
-  warning: { bg: 'bg-amber-50 dark:bg-amber-900/20',  border: 'border-amber-200 dark:border-amber-800',  dot: 'bg-amber-500',   text: 'text-amber-700 dark:text-amber-300' },
-  success: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-300' },
-  info:    { bg: 'bg-indigo-50 dark:bg-indigo-900/20', border: 'border-indigo-200 dark:border-indigo-800', dot: 'bg-indigo-500',  text: 'text-indigo-700 dark:text-indigo-300' },
+  success: {
+    gradient: 'linear-gradient(135deg, #16A34A, #22C55E)',
+    shadow: '0 6px 20px rgba(22,163,74,0.3)',
+    border: '1px solid rgba(34,197,94,0.4)',
+  },
+  warning: {
+    gradient: 'linear-gradient(135deg, #B8860B, #FFD700)',
+    shadow: '0 6px 20px rgba(184,134,11,0.3)',
+    border: '1px solid rgba(255,215,0,0.4)',
+  },
+  info: {
+    gradient: 'linear-gradient(135deg, #5B2EFF, #8E54E9)',
+    shadow: '0 6px 20px rgba(91,46,255,0.3)',
+    border: '1px solid rgba(142,84,233,0.4)',
+  },
+  danger: {
+    gradient: 'linear-gradient(135deg, #4338CA, #6366F1)',
+    shadow: '0 6px 20px rgba(67,56,202,0.3)',
+    border: '1px solid rgba(99,102,241,0.4)',
+  },
 };
 
 export default function SmartInsightsPanel({ insights }) {
@@ -32,7 +48,7 @@ export default function SmartInsightsPanel({ insights }) {
         onClick={() => setExpanded(e => !e)}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+          <div className="p-2 rounded-xl text-white shadow-lg shadow-green-500/20" style={{ background: 'linear-gradient(135deg, #16A34A, #22C55E)' }}>
             <Zap size={16} fill="currentColor" />
           </div>
           <div className="text-left">
@@ -43,7 +59,7 @@ export default function SmartInsightsPanel({ insights }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black rounded-full uppercase tracking-wider">AI</span>
+          <span className="px-2.5 py-1 bg-violet-100 dark:bg-violet-900/30 text-[#5B2EFF] dark:text-violet-400 text-[10px] font-black rounded-full uppercase tracking-wider">AI</span>
           {expanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
         </div>
       </button>
@@ -56,16 +72,22 @@ export default function SmartInsightsPanel({ insights }) {
             return (
               <div
                 key={insight.id}
-                className={`flex items-start gap-3 p-4 rounded-2xl border ${s.bg} ${s.border} animate-in fade-in slide-in-from-bottom-1`}
-                style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'both' }}
+                className="flex items-start gap-3 p-4 rounded-2xl animate-in fade-in slide-in-from-bottom-1"
+                style={{
+                  animationDelay: `${i * 60}ms`,
+                  animationFillMode: 'both',
+                  background: s.gradient,
+                  border: s.border,
+                  boxShadow: s.shadow,
+                }}
               >
-                <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${s.dot}`} />
+                <div className="mt-0.5 w-2 h-2 rounded-full flex-shrink-0 bg-white/40" />
                 <div>
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-base">{insight.emoji}</span>
-                    <p className={`text-xs font-black uppercase tracking-wider ${s.text}`}>{insight.title}</p>
+                    <p className="text-xs font-black uppercase tracking-wider text-white">{insight.title}</p>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{insight.message}</p>
+                  <p className="text-xs text-white/80 leading-relaxed">{insight.message}</p>
                 </div>
               </div>
             );
@@ -74,7 +96,7 @@ export default function SmartInsightsPanel({ insights }) {
           {insights.length > 4 && visibleCount < insights.length && (
             <button
               onClick={() => setVisibleCount(insights.length)}
-              className="w-full text-[11px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 py-2 transition-colors"
+              className="w-full text-[11px] font-black uppercase tracking-widest text-[#5B2EFF] hover:text-violet-700 py-2 transition-colors"
             >
               Show {insights.length - visibleCount} more insights ↓
             </button>

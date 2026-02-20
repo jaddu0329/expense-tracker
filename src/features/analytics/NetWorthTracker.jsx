@@ -8,22 +8,23 @@ import { formatINR, compactINR } from '../../utils/formatters';
 import { computeNetWorth } from '../../utils/calculations';
 import { bucketByMonth } from '../../utils/dateUtils';
 
-export default function NetWorthTracker({ assets, liabilities, transactions, dispatch }) {
+export default function NetWorthTracker({ assets, liabilities, transactions, dispatch, netWorthHistory = [] }) {
   const { total_assets, total_liabilities, netWorth } = computeNetWorth(assets, liabilities);
   const [showAddAsset, setShowAddAsset]       = useState(false);
   const [showAddLiability, setShowAddLiability] = useState(false);
   const [assetForm, setAssetForm]       = useState({ name: '', value: '' });
   const [liabForm,  setLiabForm]        = useState({ name: '', value: '' });
 
-  // Build net worth trend from monthly income–expense (proxy)
-  const monthBuckets = bucketByMonth(transactions, 6);
-  let running = netWorth;
+  // Build net worth trend using persisted monthly snapshots.
+  // Current month always uses the live-computed netWorth.
+  // Past months are immutable — they show the stored snapshot value (or 0 if none recorded yet).
+  const monthBuckets = bucketByMonth(transactions, 6); // [oldest … current]
+  const curKey = monthBuckets[monthBuckets.length - 1].label;
   const trendData = monthBuckets.map(m => {
-    running -= (m.income - m.expense); // walk backward
-    return { label: m.label, netWorth: running };
-  }).reverse();
-  // Final point = actual computed netWorth
-  trendData[trendData.length - 1] = { label: trendData[trendData.length - 1].label, netWorth };
+    if (m.label === curKey) return { label: m.label, netWorth };
+    const snap = netWorthHistory.find(h => h.month === m.label);
+    return { label: m.label, netWorth: snap ? snap.netWorth : 0 };
+  });
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
