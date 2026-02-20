@@ -84,12 +84,11 @@ function AppShell() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
-  if (loading) return <SplashScreen fadeOut={fadeOut} />;
-
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       state.theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
+      {loading && <SplashScreen fadeOut={fadeOut} />}
       <CustomStyles />
       <TopNav
         state={state}

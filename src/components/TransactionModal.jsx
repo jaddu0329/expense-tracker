@@ -57,57 +57,45 @@ export default function TransactionModal({ onClose, categories, editingTransacti
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-slate-950/70 backdrop-blur-md" onClick={onClose} />
+      <button
+        onClick={onClose}
+        className="absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 font-semibold text-sm shadow-lg transition-all active:scale-95"
+      >
+        <ArrowLeft size={16} /> Back
+      </button>
       <div className="relative w-full max-w-sm flex flex-col">
-        <button
-          onClick={onClose}
-          className="self-start mb-3 flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 font-semibold text-sm shadow-lg transition-all active:scale-95"
-        >
-          <ArrowLeft size={16} /> Back
-        </button>
 
-        <div className="bg-white dark:bg-slate-900 w-full rounded-[3rem] shadow-2xl p-8 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-          <h3 className="text-2xl font-black mb-6 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-900 w-full rounded-[3rem] shadow-2xl p-6 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-200">
+          <h3 className="text-xl font-black mb-4 flex items-center gap-2">
             {editingTransaction ? 'Edit Transaction ✏️' : 'New Transaction ✨'}
           </h3>
 
           {/* Type toggle */}
-          <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] mb-6">
+          <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] mb-4">
             <button
               onClick={() => handleTypeChange('expense')}
-              className={`flex-1 py-3.5 text-sm font-black rounded-2xl transition-all ${form.type === 'expense' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              className={`flex-1 py-2.5 text-sm font-black rounded-2xl transition-all ${form.type === 'expense' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
               Expense 💸
             </button>
             <button
               onClick={() => handleTypeChange('income')}
-              className={`flex-1 py-3.5 text-sm font-black rounded-2xl transition-all ${form.type === 'income' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              className={`flex-1 py-2.5 text-sm font-black rounded-2xl transition-all ${form.type === 'income' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
               Income 🤑
             </button>
           </div>
 
-          <div className="space-y-5">
-            {/* Description */}
-            <div>
-              <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Description</label>
-              <input
-                autoFocus
-                type="text"
-                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-semibold text-base"
-                value={form.title}
-                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                placeholder="What is this for?"
-              />
-            </div>
-
+          <div className="space-y-3">
             {/* Amount */}
             <div>
               <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Amount (₹)</label>
               <div className="relative">
                 <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">₹</span>
                 <input
+                  autoFocus
                   type="number"
-                  className="w-full pl-10 pr-5 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-300 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-bold text-xl tnum"
+                  className="w-full pl-10 pr-5 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-300 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-bold text-xl tnum"
                   value={form.amount}
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                   placeholder="0"
@@ -128,7 +116,7 @@ export default function TransactionModal({ onClose, categories, editingTransacti
                   <button
                     type="button"
                     onClick={() => setCatOpen(o => !o)}
-                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl border-2 border-transparent hover:border-indigo-400 outline-none font-semibold text-sm flex items-center justify-between transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl border-2 border-transparent hover:border-indigo-400 outline-none font-semibold text-sm flex items-center justify-between transition-all"
                   >
                     <span>{selectedCat?.icon} {selectedCat?.name}</span>
                     <ChevronDown size={15} className={`text-slate-400 transition-transform ${catOpen ? 'rotate-180' : ''}`} />
@@ -158,7 +146,7 @@ export default function TransactionModal({ onClose, categories, editingTransacti
                 <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Date</label>
                 <input
                   type="date"
-                  className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-semibold text-sm"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-semibold text-sm"
                   value={form.date}
                   onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                 />
@@ -208,11 +196,23 @@ export default function TransactionModal({ onClose, categories, editingTransacti
                 </div>
               )}
             </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Description</label>
+              <input
+                type="text"
+                className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 transition-all font-semibold text-base"
+                value={form.title}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="What is this for?"
+              />
+            </div>
           </div>
 
           <button
             onClick={handleSave}
-            className={`w-full font-black text-lg py-5 rounded-[2rem] shadow-xl mt-8 active:scale-95 transition-all text-white ${
+            className={`w-full font-black text-lg py-4 rounded-[2rem] shadow-xl mt-5 active:scale-95 transition-all text-white ${
               inc
                 ? 'bg-emerald-500 shadow-emerald-500/30 hover:bg-emerald-600'
                 : 'bg-rose-500 shadow-rose-500/30 hover:bg-rose-600'
