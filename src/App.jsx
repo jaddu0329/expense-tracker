@@ -261,14 +261,14 @@ function DashboardTab({ state, dispatch, onShowHistory }) {
             </div>
           </div>
 
-          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)', boxShadow: '0 10px 30px rgba(99,102,241,0.35)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '16px', transition: 'all 0.3s' }}
-            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(99,102,241,0.5)';}}
-            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(99,102,241,0.35)';}}>
+          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg,#5B2EFF,#8E54E9)', boxShadow: '0 10px 30px rgba(91,46,255,0.35)', border: '1px solid rgba(142,84,233,0.25)', borderRadius: '16px', transition: 'all 0.3s' }}
+            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(91,46,255,0.5)';}}
+            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(91,46,255,0.35)';}}>
             {/* Background glow blob */}
-            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#a5b4fc' }} />
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#c4b5fd' }} />
             <div className="flex justify-between items-start mb-6 relative z-10">
               <div className="p-2 bg-white/20 rounded-2xl shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
-                <span className="text-4xl leading-none" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>📈</span>
+                <span className="w-8 h-8 flex items-center justify-center text-[2rem] leading-none" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>📈</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full text-[10px] font-black uppercase tracking-wider">
                 <Zap size={10} fill="currentColor" /> {stats.investVsLogic.toFixed(0)}% of Plan
