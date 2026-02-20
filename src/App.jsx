@@ -261,13 +261,24 @@ function DashboardTab({ state, dispatch, onShowHistory }) {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm card-glow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><span className="text-2xl"></span></div>
-              <span className="text-xs font-bold text-blue-500">{stats.investVsLogic.toFixed(0)}% of Plan</span>
+          <div className="p-6 relative overflow-hidden group cursor-default" style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)', boxShadow: '0 10px 30px rgba(99,102,241,0.35)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '16px', transition: 'all 0.3s' }}
+            onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 15px 40px rgba(99,102,241,0.5)';}}
+            onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='0 10px 30px rgba(99,102,241,0.35)';}}>
+            {/* Background glow blob */}
+            <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full opacity-20 blur-2xl" style={{ background: '#a5b4fc' }} />
+            <div className="flex justify-between items-start mb-6 relative z-10">
+              <div className="p-2 bg-white/20 rounded-2xl shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
+                <span className="text-4xl leading-none" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>📈</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full text-[10px] font-black uppercase tracking-wider">
+                <Zap size={10} fill="currentColor" /> {stats.investVsLogic.toFixed(0)}% of Plan
+              </div>
             </div>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Investments</p>
-            <h3 className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400 tnum">{formatINR(stats.totalInvestments)}</h3>
+            <div className="relative z-10">
+              <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em] mb-1">Investments</p>
+              <h3 className="text-3xl font-black text-white tnum">{formatINR(stats.totalInvestments)}</h3>
+              <p className="text-[10px] text-white/60 font-bold mt-1">Goal: {formatINR(stats.suggestedInvestmentGoal)}</p>
+            </div>
           </div>
 
           <div className={`p-6 rounded-3xl border shadow-sm card-glow ${stats.balance >= 0 ? 'bg-gradient-to-br from-indigo-50/50 to-white dark:from-slate-900 dark:to-indigo-900/10 border-indigo-100 dark:border-indigo-900/30' : 'bg-gradient-to-br from-rose-50/50 to-white dark:from-slate-900 dark:to-rose-900/10 border-rose-100 dark:border-rose-900/30'}`}>
