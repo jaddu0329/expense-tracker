@@ -123,7 +123,14 @@ export default function NetWorthTracker({ assets, liabilities, transactions, dis
                   setShowAddAsset(false);
                 }
               }}
-              className="px-3 py-2 bg-emerald-500 text-white text-xs font-black rounded-lg hover:bg-emerald-600 transition-all"
+              className="px-3 py-2 text-xs font-black rounded-lg transition-all duration-200"
+              style={{
+                background: 'linear-gradient(135deg, #22E3A1, #16C784)',
+                color: '#FFFFFF',
+                boxShadow: '0 0 12px rgba(34,227,161,0.6), 0 0 24px rgba(34,227,161,0.4)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+              onMouseLeave={e => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
             >
               Add
             </button>

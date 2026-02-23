@@ -97,7 +97,14 @@ export default function FinancialGoals({ goals, dispatch }) {
           </div>
           <button
             onClick={handleAdd}
-            className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            className="w-full py-3 font-black text-sm rounded-xl active:scale-95 transition-all duration-200"
+            style={{
+              background: 'linear-gradient(135deg, #22E3A1, #16C784)',
+              color: '#FFFFFF',
+              boxShadow: '0 0 12px rgba(34,227,161,0.6), 0 0 24px rgba(34,227,161,0.4)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
           >
             Create Goal 🎯
           </button>

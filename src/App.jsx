@@ -78,6 +78,13 @@ function AppShell() {
   const [filterOpen,  setFilterOpen]  = useState(false);
   const [incomeModal, setIncomeModal] = useState(false);
 
+  // Scroll lock: disable body scroll whenever any overlay is open
+  useEffect(() => {
+    const anyOpen = modalOpen || historyOpen || filterOpen || incomeModal;
+    document.body.style.overflow = anyOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [modalOpen, historyOpen, filterOpen, incomeModal]);
+
   useEffect(() => {
     const t1 = setTimeout(() => setFadeOut(true),  3900);
     const t2 = setTimeout(() => setLoading(false), 4600);
@@ -149,7 +156,7 @@ function TopNav({ state, dispatch, onAdd, onFilterOpen, onIncomeModal }) {
   const stats = useMemo(() => computeStats(state.transactions, state.incomeTarget), [state.transactions, state.incomeTarget]);
   const score = useMemo(() => computeSavingsScore(stats), [stats]);
   return (
-    <header className="sticky top-0 z-[1000] shadow-lg" style={{ background: 'linear-gradient(135deg, #5B2EFF, #8E54E9)' }}>
+    <header className="sticky top-0 z-[100] shadow-lg" style={{ background: 'linear-gradient(135deg,#4F46E5,#7C3AED)', transition: 'background 0.25s ease' }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg text-white shadow-lg shadow-black/10"><Wallet size={22} /></div>
@@ -161,8 +168,14 @@ function TopNav({ state, dispatch, onAdd, onFilterOpen, onIncomeModal }) {
           </div>
           <button
             onClick={onIncomeModal}
-            className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-black text-sm shadow-lg shadow-green-700/30 active:scale-95 transition-all duration-200 ease-in-out hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #22C55E, #16A34A)' }}
+            className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full font-black text-sm active:scale-95 transition-all duration-200 ease-in-out"
+            style={{
+              background: 'linear-gradient(135deg, #22E3A1, #16C784)',
+              color: '#FFFFFF',
+              boxShadow: '0 0 12px rgba(34,227,161,0.6), 0 0 24px rgba(34,227,161,0.4)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.08)'; e.currentTarget.style.transform = 'scale(1.02)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = ''; e.currentTarget.style.transform = ''; }}
           >
             <Target size={15} /> Set Goal
           </button>
@@ -186,7 +199,7 @@ function TabBar({ activeTab, dispatch, theme }) {
   const isDark = theme === 'dark';
   return (
     <div
-      className="sticky top-16 z-[900] transition-colors duration-300"
+      className="sticky top-16 z-[200] transition-colors duration-300"
       style={{
         background: isDark ? '#0F172A' : '#FFFFFF',
         borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.06)',
@@ -427,7 +440,7 @@ function DashboardTab({ state, dispatch, onShowHistory }) {
 
       {/* Sidebar */}
       <aside className="lg:col-span-4 space-y-6">
-        <div className="bg-indigo-600 text-white p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-500/30 relative overflow-hidden group">
+        <div className="text-white p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-500/30 relative overflow-hidden group" style={{ background: 'linear-gradient(135deg,#4F46E5,#7C3AED)' }}>
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-500"><ArrowUpRight size={80} strokeWidth={3} /></div>
           <h4 className="text-lg font-bold mb-2 flex items-center gap-2">Plan Setup </h4>
           <p className="text-indigo-100 text-xs mb-6 leading-relaxed font-medium">Set your monthly income target and we build your strategy.</p>
@@ -499,9 +512,19 @@ function AchievementsTab({ state }) {
 
 function IncomeGoalModal({ value, dispatch, onClose, incomeGoalImg }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] shadow-2xl p-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-300">
+    <>
+      {/* Backdrop — blur lives here only */}
+      <div
+        className="fixed inset-0 z-[900] bg-black/60 backdrop-blur-sm"
+        style={{ width: '100vw', height: '100vh', top: 0, left: 0 }}
+        onClick={onClose}
+      />
+      {/* Modal content */}
+      <div
+        className="fixed z-[1000] flex items-center justify-center p-4 pointer-events-none"
+        style={{ top: 0, left: 0, width: '100vw', height: '100vh' }}
+      >
+      <div className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] shadow-2xl p-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-300 pointer-events-auto">
         <div className="bg-emerald-500 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-6 mx-auto shadow-xl shadow-emerald-500/40">
           <img src={incomeGoalImg} alt="Income Goal" className="w-10 h-10 object-contain" />
         </div>
@@ -516,6 +539,7 @@ function IncomeGoalModal({ value, dispatch, onClose, incomeGoalImg }) {
           <button onClick={onClose} className="w-full bg-indigo-600 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-indigo-500/30 active:scale-[0.98] transition-all text-lg">Save Strategy </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

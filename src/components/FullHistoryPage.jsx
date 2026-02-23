@@ -45,7 +45,7 @@ export default function FullHistoryPage({ transactions, categories, filters, dis
   }, [filtered]);
 
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col bg-slate-50 dark:bg-slate-950 animate-in slide-in-from-bottom duration-300">
+    <div className="flex flex-col bg-slate-50 dark:bg-slate-950 animate-in slide-in-from-bottom duration-300" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 800 }}>
       {/* Header */}
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">

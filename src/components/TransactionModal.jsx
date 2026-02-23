@@ -55,15 +55,26 @@ export default function TransactionModal({ onClose, categories, editingTransacti
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 dark:bg-slate-950/70 backdrop-blur-md" onClick={onClose} />
+    <>
+      {/* Backdrop — blur is isolated here, does not affect page content */}
+      <div
+        className="fixed bg-black/60 backdrop-blur-sm z-[900]"
+        style={{ top: 0, left: 0, width: '100vw', height: '100vh' }}
+        onClick={onClose}
+      />
+      {/* Back button sits above modal content */}
       <button
         onClick={onClose}
-        className="absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 font-semibold text-sm shadow-lg transition-all active:scale-95"
+        className="fixed top-6 left-6 z-[1010] flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 font-semibold text-sm shadow-lg transition-all active:scale-95"
       >
         <ArrowLeft size={16} /> Back
       </button>
-      <div className="relative w-full max-w-sm flex flex-col">
+      {/* Modal content layer */}
+      <div
+        className="fixed z-[1000] flex items-center justify-center p-4 pointer-events-none"
+        style={{ top: 0, left: 0, width: '100vw', height: '100vh' }}
+      >
+      <div className="relative w-full max-w-sm flex flex-col pointer-events-auto">
 
         <div className="bg-white dark:bg-slate-900 w-full rounded-[3rem] shadow-2xl p-6 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-200">
           <h3 className="text-xl font-black mb-4 flex items-center gap-2">
@@ -163,10 +174,37 @@ export default function TransactionModal({ onClose, categories, editingTransacti
                 <button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, recurring: !f.recurring }))}
-                  className={`relative w-10 h-6 rounded-full transition-colors ${form.recurring ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                  aria-pressed={form.recurring}
+                  style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    flexShrink: 0,
+                    width: '40px',
+                    height: '24px',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    backgroundColor: form.recurring ? '#0ea5e9' : '#cbd5e1',
+                    transition: 'background-color 300ms ease',
+                    outline: 'none',
+                  }}
                 >
                   <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.recurring ? 'translate-x-5' : 'translate-x-1'}`}
+                    style={{
+                      position: 'absolute',
+                      top: '4px',
+                      left: 0,
+                      width: '16px',
+                      height: '16px',
+                      borderRadius: '9999px',
+                      backgroundColor: '#ffffff',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                      transform: form.recurring ? 'translateX(20px)' : 'translateX(4px)',
+                      transition: 'transform 300ms ease',
+                      willChange: 'transform',
+                    }}
                   />
                 </button>
               </div>
@@ -222,6 +260,7 @@ export default function TransactionModal({ onClose, categories, editingTransacti
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

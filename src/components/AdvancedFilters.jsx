@@ -19,14 +19,15 @@ export default function AdvancedFilters({ filters, categories, dispatch, isOpen,
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — blur isolated to this element */}
       <div
-        className="fixed inset-0 z-[80] bg-black/30 backdrop-blur-sm"
+        className="fixed bg-black/40 backdrop-blur-sm z-[900]"
+        style={{ top: 0, left: 0, width: '100vw', height: '100vh' }}
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-[90] w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 z-[910] w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
