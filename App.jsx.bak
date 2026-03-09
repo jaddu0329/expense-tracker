@@ -1,0 +1,1016 @@
+import React, { 
+  createContext, 
+  useContext, 
+  useReducer, 
+  useEffect, 
+  useState, 
+  useMemo 
+} from 'react';
+import SplashScreen from './components/SplashScreen';
+import moneyBagImg from './assets/money-bag.png';
+import incomeGoalImg from './assets/income-goal.png';
+import { 
+  Plus, 
+  Trash2, 
+  Edit2, 
+  Search, 
+  Filter, 
+  Moon, 
+  Sun, 
+  TrendingUp, 
+  TrendingDown, 
+  Wallet, 
+  PieChart as PieChartIcon, 
+  BarChart3, 
+  Settings, 
+  Download, 
+  RefreshCcw, 
+  Calendar, 
+  Tag, 
+  AlertCircle, 
+  ChevronDown, 
+  X, 
+  Target, 
+  ShieldCheck, 
+  Coins, 
+  ArrowUpRight, 
+  GripVertical, 
+  Zap,
+  Activity,
+  ArrowRight,
+  ArrowLeft
+} from 'lucide-react';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  CartesianGrid 
+} from 'recharts';
+
+// --- UTILS ---
+
+/**
+ * Formats numbers into the Indian Rupee standard with correct comma placement.
+ * Logic: 1,23,45,678 (Crores, Lakhs, Thousands, Hundreds)
+ */
+const formatINR = (amount) => {
+  if (amount === undefined || amount === null || isNaN(amount)) return "₹0";
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+/** Renders a formatted currency value with tabular-nums for perfect column alignment. */
+const Currency = ({ value, className = '' }) => (
+  <span className={`tnum ${className}`}>{formatINR(value)}</span>
+);
+
+// --- INITIAL STATE & CONSTANTS ---
+
+const INITIAL_CATEGORIES = [
+  { id: '1', name: 'Food', icon: '🍔', color: '#6366f1', type: 'expense' },
+  { id: '2', name: 'Rent', icon: '🏠', color: '#8b5cf6', type: 'expense' },
+  { id: '3', name: 'Salary', icon: '💰', color: '#10b981', type: 'income' },
+  { id: '4', name: 'Shopping', icon: '🛍️', color: '#f59e0b', type: 'expense' },
+  { id: '5', name: 'Freelance', icon: '💻', color: '#8b5cf6', type: 'income' },
+  { id: '6', name: 'Investment', icon: '📈', color: '#10b981', type: 'expense' }, 
+  { id: '7', name: 'Travel', icon: '✈️', color: '#06b6d4', type: 'expense' },
+  { id: '8', name: 'Entertainment', icon: '🎬', color: '#ec4899', type: 'expense' },
+];
+
+const EMOJI_OPTIONS = ['🍔', '🏠', '🛍️', '🎬', '✈️', '💊', '⛽', '💡', '🎓', '🎁', '🛒', '🏋️', '🐶', '👶', '🍕', '🍻'];
+
+const initialState = {
+  transactions: JSON.parse(localStorage.getItem('et_transactions')) || [],
+  categories: JSON.parse(localStorage.getItem('et_categories')) || INITIAL_CATEGORIES,
+  budget: JSON.parse(localStorage.getItem('et_budget')) || 50000,
+  incomeTarget: JSON.parse(localStorage.getItem('et_income_target')) || 75000,
+  theme: localStorage.getItem('et_theme') || 'light',
+  filters: {
+    search: '',
+    type: 'all',
+    category: 'all',
+    dateRange: 'all'
+  }
+};
+
+// --- REDUCER ---
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'ADD_TRANSACTION':
+      return { ...state, transactions: [action.payload, ...state.transactions] };
+    case 'EDIT_TRANSACTION':
+      return {
+        ...state,
+        transactions: state.transactions.map(t => t.id === action.payload.id ? action.payload : t)
+      };
+    case 'DELETE_TRANSACTION':
+      return {
+        ...state,
+        transactions: state.transactions.filter(t => t.id !== action.payload)
+      };
+    case 'SET_BUDGET':
+      return { ...state, budget: action.payload };
+    case 'SET_INCOME_TARGET':
+      return { ...state, incomeTarget: action.payload };
+    case 'ADD_CATEGORY':
+      return { ...state, categories: [...state.categories, action.payload] };
+    case 'DELETE_CATEGORY':
+      return { ...state, categories: state.categories.filter(c => c.id !== action.payload) };
+    case 'SET_FILTER':
+      return { ...state, filters: { ...state.filters, ...action.payload } };
+    case 'TOGGLE_THEME':
+      const newTheme = state.theme === 'light' ? 'dark' : 'light';
+      return { ...state, theme: newTheme };
+    case 'RESET_ALL':
+      return { ...initialState, theme: state.theme };
+    default:
+      return state;
+  }
+}
+
+const GlobalContext = createContext();
+
+// --- CUSTOM CSS STYLES ---
+const CustomStyles = () => (
+  <style dangerouslySetInnerHTML={{ __html: `
+    @keyframes float {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(5deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
+    }
+    .animate-float-emoji {
+      display: inline-block;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 20px;
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+    .glossy-overlay {
+      position: relative;
+      overflow: hidden;
+    }
+    .glossy-overlay::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+      pointer-events: none;
+    }
+    .card-glow:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      transform: translateY(-2px);
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  `}} />
+);
+
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+
+  // --- SPLASH SCREEN ---
+  const [loading, setLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setFadeOut(true), 3900);
+    const removeTimer = setTimeout(() => setLoading(false), 4600);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('et_transactions', JSON.stringify(state.transactions));
+    localStorage.setItem('et_categories', JSON.stringify(state.categories));
+    localStorage.setItem('et_budget', JSON.stringify(state.budget));
+    localStorage.setItem('et_income_target', JSON.stringify(state.incomeTarget));
+    localStorage.setItem('et_theme', state.theme);
+    if (state.theme === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [state.transactions, state.categories, state.budget, state.incomeTarget, state.theme]);
+
+  // --- MATHEMATICAL LOGIC & CALCULATIONS ---
+  const stats = useMemo(() => {
+    const income = state.transactions
+      .filter(t => t.type === 'income')
+      .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    
+    const expensesOnly = state.transactions
+      .filter(t => t.type === 'expense' && t.categoryId !== '6')
+      .reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+    const investmentsOnly = state.transactions
+      .filter(t => t.categoryId === '6')
+      .reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+    const totalOutflow = expensesOnly + investmentsOnly;
+    
+    const suggestedExpenseLimit = state.incomeTarget * 0.70;
+    const suggestedInvestmentGoal = state.incomeTarget * 0.20;
+    const suggestedBuffer = state.incomeTarget * 0.10;
+
+    const incomeAchievement = state.incomeTarget > 0 
+      ? Math.min((income / state.incomeTarget) * 100, 100).toFixed(0) 
+      : 0;
+
+    return {
+      totalIncome: income,
+      totalExpenses: expensesOnly,
+      totalInvestments: investmentsOnly,
+      totalOutflow,
+      balance: income - totalOutflow,
+      savingsRate: income > 0 ? (((income - expensesOnly) / income) * 100).toFixed(1) : 0,
+      incomeAchievement,
+      suggestedExpenseLimit,
+      suggestedInvestmentGoal,
+      suggestedBuffer,
+      expenseVsLogic: suggestedExpenseLimit > 0 ? (expensesOnly / suggestedExpenseLimit * 100) : 0,
+      investVsLogic: suggestedInvestmentGoal > 0 ? (investmentsOnly / suggestedInvestmentGoal * 100) : 0,
+      bufferVsLogic: suggestedBuffer > 0 ? ((income - totalOutflow) / suggestedBuffer * 100) : 0
+    };
+  }, [state.transactions, state.incomeTarget]);
+
+  const filteredTransactions = useMemo(() => {
+    return state.transactions.filter(t => {
+      const matchesSearch = t.title.toLowerCase().includes(state.filters.search.toLowerCase());
+      const matchesType = state.filters.type === 'all' || t.type === state.filters.type;
+      const matchesCategory = state.filters.category === 'all' || t.categoryId === state.filters.category;
+      return matchesSearch && matchesType && matchesCategory;
+    });
+  }, [state.transactions, state.filters]);
+
+  const chartData = useMemo(() => {
+    const outflowTransactions = state.transactions.filter(t => t.type === 'expense');
+    
+    if (outflowTransactions.length === 0) {
+      return [{ 
+        name: 'No Spending', 
+        value: 1, 
+        color: state.theme === 'dark' ? '#1e293b' : '#f1f5f9',
+        isPlaceholder: true 
+      }];
+    }
+
+    const catTotals = {};
+    outflowTransactions.forEach(t => {
+      const cat = state.categories.find(c => c.id === t.categoryId);
+      const name = cat ? cat.name : 'Other';
+      catTotals[name] = (catTotals[name] || 0) + Number(t.amount);
+    });
+
+    return Object.keys(catTotals).map(name => ({
+      name,
+      value: catTotals[name],
+      color: state.categories.find(c => c.name === name)?.color || '#94a3b8',
+      percentage: ((catTotals[name] / (stats.totalOutflow || 1)) * 100).toFixed(1)
+    }));
+  }, [state.transactions, state.categories, stats.totalOutflow, state.theme]);
+
+  if (loading) {
+    return <SplashScreen fadeOut={fadeOut} />;
+  }
+
+  return (
+    <GlobalContext.Provider value={{ state, dispatch }}>
+      <CustomStyles />
+      <div className={`min-h-screen transition-colors duration-300 ${state.theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+        
+        <header className="sticky top-0 z-20 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-indigo-500/20 shadow-lg">
+                <Wallet size={24} />
+              </div>
+              <h1 className="text-xl font-black tracking-tight hidden sm:block">FinTrack<span className="text-indigo-600">Pro</span></h1>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button 
+                onClick={() => setIsIncomeModalOpen(true)}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-bold text-sm transition-all hover:bg-emerald-200 active:scale-95"
+              >
+                <Target size={16} />
+                Set Income
+              </button>
+
+              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block" />
+
+              <button onClick={() => dispatch({ type: 'TOGGLE_THEME' })} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors">
+                {state.theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              </button>
+              
+              <button onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition-all text-sm">
+                <Plus size={18} /> <span className="hidden sm:inline">Add Record</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Top Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Actual Income Card */}
+              <div className="p-6 relative overflow-hidden group" style={{ background: 'linear-gradient(135deg, #1FB874, #119E62)', boxShadow: '0 10px 30px rgba(31,184,116,0.3)', border: '1px solid rgba(31,184,116,0.25)', borderRadius: '16px', transition: 'all 0.3s ease' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 15px 40px rgba(31,184,116,0.4)'; }} onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 10px 30px rgba(31,184,116,0.3)'; }}>
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div className="p-2 bg-white/20 rounded-2xl shadow-lg shadow-black/10 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                    <img src={moneyBagImg} alt="Money Bag" className="w-10 h-10 object-contain animate-float-emoji" />
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">
+                      <Zap size={10} fill="currentColor" />
+                      {stats.incomeAchievement}% reached
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="relative z-10 flex flex-col gap-1">
+                  <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Live Tracking</p>
+                  <div className="flex items-end justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-white/80 uppercase">Actual 🤑</span>
+                      <h3 className="text-3xl font-black text-white tracking-tighter"><Currency value={stats.totalIncome} /></h3>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Target Goal</span>
+                      <p className="text-sm font-black text-white/80"><Currency value={state.incomeTarget} /></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Investments Card */}
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all card-glow">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><span className="text-2xl animate-float-emoji">📈</span></div>
+                  <span className="text-xs font-bold text-blue-500">{stats.investVsLogic.toFixed(0)}% of Plan</span>
+                </div>
+                <p className="text-xs font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Total Investments</p>
+                <h3 className="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400"><Currency value={stats.totalInvestments} /></h3>
+              </div>
+
+              {/* Net Savings Card */}
+              <div className={`p-6 rounded-3xl border shadow-sm bg-gradient-to-br transition-all card-glow ${stats.balance >= 0 ? 'from-indigo-50/50 to-white dark:from-slate-900 dark:to-indigo-900/10 border-indigo-100 dark:border-indigo-900/30' : 'from-rose-50/50 to-white dark:from-slate-900 dark:to-rose-900/10 border-rose-100 dark:border-rose-900/30'}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`p-2 rounded-lg ${stats.balance >= 0 ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600'}`}>
+                    <span className="text-2xl animate-float-emoji">{stats.balance >= 0 ? '🏦' : '⚠️'}</span>
+                  </div>
+                  <span className={`text-xs font-bold ${stats.balance >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>{stats.savingsRate}% Rate</span>
+                </div>
+                <p className="text-xs font-black text-slate-400 uppercase tracking-[0.15em] mb-1">Net Savings</p>
+                <h3 className={`text-2xl font-bold tracking-tight ${stats.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  <span className="tnum">{stats.balance < 0 ? '-' : ''}{formatINR(Math.abs(stats.balance))}</span>
+                </h3>
+              </div>
+            </div>
+
+            {/* FINANCIAL HEALTH LOGIC SECTION */}
+            <div className="rounded-[2.5rem] p-8 shadow-lg overflow-hidden relative text-white" style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)' }}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative z-10">
+                <div>
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm"><TrendingUp size={18} /></div> Financial Strategy Logic (70/20/10)
+                  </h2>
+                  <p className="text-sm text-indigo-100 mt-1 italic font-medium">Personalized for Income Goal: <Currency value={state.incomeTarget} /></p>
+                </div>
+                <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200">
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-white/30"></div> Plan</span>
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]"></div> Actual</span>
+                </div>
+              </div>
+
+              <div className="space-y-10 relative z-10">
+                {/* Logic Bars with Glossy Styles */}
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm items-end">
+                    <span className="font-bold flex items-center gap-2">Needs & Expenses 🛍️ <span className="text-[10px] text-indigo-200 font-normal">(Max 70%)</span></span>
+                    <span className="text-xs font-black tracking-tighter tnum"><span className="text-indigo-200">{formatINR(stats.totalExpenses)}</span> / <span className="text-white font-bold">{formatINR(stats.suggestedExpenseLimit)}</span></span>
+                  </div>
+                  <div className="h-3 bg-white/20 rounded-full overflow-hidden p-0.5">
+                    <div className={`h-full transition-all duration-1000 rounded-full ${Number(stats.expenseVsLogic) > 100 ? 'bg-rose-400' : 'bg-white'}`} style={{ width: `${Math.min(stats.expenseVsLogic, 100)}%` }} />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm items-end">
+                    <span className="font-bold flex items-center gap-2">Investment Goal 📈 <span className="text-[10px] text-indigo-200 font-normal">(Ideal 20%)</span></span>
+                    <span className="text-xs font-medium tnum">{formatINR(stats.totalInvestments)} / <span className="text-white font-bold">{formatINR(stats.suggestedInvestmentGoal)}</span></span>
+                  </div>
+                  <div className="h-3 bg-white/20 rounded-full overflow-hidden p-0.5">
+                    <div className="h-full transition-all duration-1000 rounded-full bg-white" style={{ width: `${Math.min(stats.investVsLogic, 100)}%` }} />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm items-end">
+                    <span className="font-bold flex items-center gap-2">Emergency Buffer 🛡️ <span className="text-[10px] text-indigo-200 font-normal">(Safe 10%)</span></span>
+                    <span className="text-xs font-medium tnum">{formatINR(stats.balance)} / <span className="text-white font-bold">{formatINR(stats.suggestedBuffer)}</span></span>
+                  </div>
+                  <div className="h-3 bg-white/20 rounded-full overflow-hidden p-0.5">
+                    <div className="h-full transition-all duration-1000 rounded-full bg-white" style={{ width: `${Math.min((stats.balance / (stats.suggestedBuffer || 1) * 100), 100)}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* PIE CHART SECTION */}
+              <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm relative group overflow-hidden">
+                <div className="flex justify-between items-center mb-6 relative z-10">
+                  <h4 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                    <PieChartIcon size={18} className="text-indigo-600" /> Spending Pattern
+                  </h4>
+                  {stats.totalOutflow > 0 && (
+                     <div className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-black uppercase text-slate-500">
+                        Total: <Currency value={stats.totalOutflow} />
+                     </div>
+                  )}
+                </div>
+
+                <div className="h-72 relative z-10 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie 
+                        data={chartData} 
+                        innerRadius={80} 
+                        outerRadius={110} 
+                        paddingAngle={6} 
+                        dataKey="value"
+                        stroke="none"
+                        cornerRadius={12}
+                        animationBegin={200}
+                        animationDuration={1200}
+                        cx="50%"
+                        cy="45%" 
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.color} 
+                            style={{ 
+                              filter: `drop-shadow(0 0 10px ${entry.color}44)`,
+                              cursor: 'pointer' 
+                            }} 
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        labelStyle={{ display: 'none' }}
+                        formatter={(value, name, props) => {
+                          const percent = props.payload.percentage || 0;
+                          return [formatINR(value), `${name} (${percent}%)` ];
+                        }} 
+                        contentStyle={{ 
+                          borderRadius: '20px', 
+                          border: 'none', 
+                          boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', 
+                          backgroundColor: state.theme === 'dark' ? '#1e293b' : '#fff',
+                          padding: '12px 16px',
+                          fontWeight: '800',
+                          fontSize: '12px'
+                        }} 
+                        itemStyle={{ color: state.theme === 'dark' ? '#f8fafc' : '#1e293b' }}
+                      />
+                      <Legend verticalAlign="bottom" iconType="circle" formatter={(value) => <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{value}</span>}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  
+                  <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none w-[140px] text-center" style={{ marginTop: '-20px' }}>
+                    {stats.totalOutflow > 0 ? (
+                      <>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-0.5">Total Spent</p>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
+                          {((stats.totalOutflow / (stats.totalIncome || stats.totalOutflow || 1)) * 100).toFixed(0)}%
+                        </p>
+                        <div className="h-0.5 w-8 bg-indigo-500 rounded-full mt-2" />
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <span className="text-3xl animate-float-emoji mb-2">⚡</span>
+                        <p className="text-[11px] font-black uppercase text-slate-400 leading-tight">Ready to<br/>Track?</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {stats.totalOutflow === 0 && (
+                  <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full text-center px-6 pointer-events-none">
+                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider bg-slate-50 dark:bg-slate-900/80 px-4 py-2 rounded-full inline-block border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm">
+                        Add an expense to start analysis
+                     </p>
+                  </div>
+                )}
+              </div>
+
+              {/* LATEST RECORDS SECTION */}
+              <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col group/records card-glow">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Activity size={18} className="text-indigo-600" />
+                    <h4 className="font-black text-sm uppercase tracking-widest">Recent Activity</h4>
+                  </div>
+                  <div className="relative group/search">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/search:text-indigo-600 transition-colors" size={14} />
+                    <input 
+                      type="text" 
+                      placeholder="Find record..." 
+                      className="pl-9 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-transparent focus:border-indigo-600 outline-none text-xs font-bold transition-all w-full sm:w-44"
+                      value={state.filters.search}
+                      onChange={(e) => dispatch({ type: 'SET_FILTER', payload: { search: e.target.value }})}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto max-h-[350px] custom-scrollbar">
+                  {filteredTransactions.length > 0 ? (
+                    <table className="w-full text-left border-collapse">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                        {filteredTransactions.slice(0, 15).map((t, index) => {
+                          const category = state.categories.find(c => c.id === t.categoryId);
+                          return (
+                            <tr 
+                              key={t.id} 
+                              className="group/row hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-all duration-300 cursor-default animate-in fade-in slide-in-from-bottom-2"
+                              style={{ animationDelay: `${index * 40}ms`, animationFillMode: 'both' }}
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                  <div 
+                                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-lg shadow-sm group-hover/row:scale-110 group-hover/row:rotate-6 transition-all duration-300"
+                                    style={{ backgroundColor: category?.color || '#94a3b8' }}
+                                  >
+                                    <span className="animate-float-emoji">{category?.icon || '🏷️'}</span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-black text-slate-900 dark:text-white group-hover/row:text-indigo-600 transition-colors">{t.title}</span>
+                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                      {new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • {category?.name || 'General'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex flex-col items-end">
+                                  <span className={`text-sm font-black tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                    <span className="tnum">{t.type === 'income' ? '+' : '-'} {formatINR(t.amount)}</span> {t.type === 'income' ? '🤑' : '💸'}
+                                  </span>
+                                  <button 
+                                    onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}
+                                    className="opacity-0 group-hover/row:opacity-100 p-1 text-slate-300 hover:text-rose-500 transition-all -mb-4 mt-1"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="p-12 flex flex-col items-center justify-center text-center animate-in zoom-in duration-500">
+                       <span className="text-5xl animate-float-emoji mb-6 opacity-40">📊</span>
+                       <h5 className="font-black text-sm uppercase tracking-widest text-slate-900 dark:text-white mb-2">Clean Slate</h5>
+                       <p className="text-[10px] text-slate-400 font-bold max-w-[200px] leading-relaxed mb-6 uppercase tracking-tight">
+                         Your financial story starts here. Record your first transaction to see the magic happen!
+                       </p>
+                       <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 max-w-[240px]">
+                          <p className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                             <Zap size={10} fill="currentColor" /> Strategy
+                          </p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium italic">
+                            "The first step to wealth is tracking where your money goes, not just how much comes in."
+                          </p>
+                       </div>
+                    </div>
+                  )}
+                </div>
+                
+                {filteredTransactions.length > 0 && (
+                  <button onClick={() => setIsHistoryOpen(true)} className="p-4 bg-slate-50/50 dark:bg-slate-800/20 text-[12px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2 border-t border-slate-100 dark:border-slate-800">
+                    Full Log History <ArrowRight size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <aside className="lg:col-span-4 space-y-6">
+            {/* Sidebar Strategy Card */}
+            <div className="bg-indigo-600 text-white p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-500/30 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-500">
+                <ArrowUpRight size={80} strokeWidth={3} />
+              </div>
+              <h4 className="text-lg font-bold mb-2 flex items-center gap-2">Plan Setup <span className="animate-float-emoji">🛠️</span></h4>
+              <p className="text-indigo-100 text-xs mb-8 leading-relaxed font-medium">Input your monthly income target. We'll automatically build your professional spending strategy.</p>
+              
+              <div className="space-y-6 relative z-10">
+                <div className="group/input">
+                  <label className="text-[10px] uppercase font-black tracking-widest text-indigo-300 block mb-2">Monthly Income Goal</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-indigo-200 text-xl">₹</span>
+                    <input type="number" value={state.incomeTarget || ''} onChange={(e) => dispatch({ type: 'SET_INCOME_TARGET', payload: e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0 })} className="w-full pl-10 pr-4 py-4 bg-white/10 border-2 border-white/10 rounded-2xl outline-none focus:border-white/40 focus:bg-white/20 transition-all font-bold text-2xl" />
+                  </div>
+                  <p className="text-[10px] text-indigo-200 font-medium text-right mt-1 tracking-wide"><Currency value={state.incomeTarget} /></p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-center">
+                    <p className="text-[9px] text-indigo-200 font-black uppercase tracking-wider mb-1">Invest Aim 📈</p>
+                    <p className="font-bold text-sm tracking-tight"><Currency value={stats.suggestedInvestmentGoal} /></p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-center">
+                    <p className="text-[9px] text-indigo-200 font-black uppercase tracking-wider mb-1">Needs Cap 🛍️</p>
+                    <p className="font-bold text-sm tracking-tight"><Currency value={stats.suggestedExpenseLimit} /></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <CategoryList categories={state.categories} onAdd={(cat) => dispatch({ type: 'ADD_CATEGORY', payload: cat })} onDelete={(id) => dispatch({ type: 'DELETE_CATEGORY', payload: id })} />
+
+            <div className="flex items-center justify-between gap-4">
+               <button onClick={() => dispatch({ type: 'RESET_ALL' })} className="flex-1 flex items-center justify-center gap-2 p-4 bg-red-600 dark:bg-red-700 text-white rounded-[1.5rem] text-sm font-bold transition-all hover:bg-red-700 active:scale-95"><RefreshCcw size={14} /> Reset</button>
+               <button className="p-4 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-[1.5rem] transition-all hover:bg-slate-200 active:scale-95"><Download size={16} /></button>
+            </div>
+          </aside>
+        </main>
+
+        {/* Full History Page */}
+        {isHistoryOpen && (
+          <FullHistoryPage
+            transactions={state.transactions}
+            categories={state.categories}
+            filters={state.filters}
+            dispatch={dispatch}
+            theme={state.theme}
+            onClose={() => setIsHistoryOpen(false)}
+            onEdit={(t) => { setEditingTransaction(t); setIsModalOpen(true); setIsHistoryOpen(false); }}
+          />
+        )}
+
+        {/* Modal: Set Income Goal */}
+        {isIncomeModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={() => setIsIncomeModalOpen(false)} />
+            <div className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] shadow-2xl p-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-300">
+              <div className="bg-emerald-500 w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-white mb-6 mx-auto shadow-xl shadow-emerald-500/40"><img src={incomeGoalImg} alt="Income Goal" className="w-10 h-10 object-contain" /></div>
+              <h3 className="text-2xl font-black mb-2 text-center">Set Income Goal</h3>
+              <p className="text-slate-500 text-center text-sm mb-8">What is your total target income for this month?</p>
+              <div className="space-y-6">
+                <div className="relative">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-2xl">₹</span>
+                  <input autoFocus type="number" placeholder="0" className="w-full pl-12 pr-6 py-6 bg-slate-50 dark:bg-slate-800 rounded-[2rem] outline-none border-2 border-transparent focus:border-indigo-600 transition-all font-black text-4xl tracking-tighter" value={state.incomeTarget || ''} onChange={(e) => dispatch({ type: 'SET_INCOME_TARGET', payload: e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0 })} />
+                </div>
+                <p className="text-sm text-slate-400 font-bold text-center -mt-2 tracking-wide"><Currency value={state.incomeTarget} /></p>
+                <button onClick={() => setIsIncomeModalOpen(false)} className="w-full bg-indigo-600 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-indigo-500/30 active:scale-[0.98] transition-all text-lg">Save Strategy ✅</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Add Transaction */}
+        {isModalOpen && (
+          <TransactionModal categories={state.categories} editingTransaction={editingTransaction} onClose={() => setIsModalOpen(false)} onSave={(data) => {
+              if (editingTransaction) dispatch({ type: 'EDIT_TRANSACTION', payload: { ...data, id: editingTransaction.id } });
+              else dispatch({ type: 'ADD_TRANSACTION', payload: { ...data, id: crypto.randomUUID() } });
+              setIsModalOpen(false);
+            }} />
+        )}
+      </div>
+    </GlobalContext.Provider>
+  );
+}
+
+// --- SUB-COMPONENTS ---
+
+function CategoryList({ categories, onAdd, onDelete }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newCat, setNewCat] = useState({ name: '', color: '#6366f1', type: 'expense', icon: '🏷️' });
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-bold flex items-center gap-2"><Tag size={18} className="text-indigo-500" /> Categories <span className="animate-float-emoji">🏷️</span></h4>
+        <button onClick={() => setShowAdd(!showAdd)} className="text-xs font-bold text-indigo-600 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">{showAdd ? 'Close' : 'Add'}</button>
+      </div>
+      <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+        {categories.map(cat => (
+          <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-slate-100 dark:bg-slate-800 border-2" style={{ borderColor: cat.color }}>
+                <span className="animate-float-emoji">{cat.icon || '🏷️'}</span>
+              </div>
+              <span className="text-xs font-semibold">{cat.name}</span>
+            </div>
+            {showAdd && <button onClick={() => onDelete(cat.id)} className="text-rose-400 hover:text-rose-600 p-1"><X size={14} /></button>}
+          </div>
+        ))}
+      </div>
+      {showAdd && (
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3 animate-in slide-in-from-top-2 duration-300">
+          <input type="text" placeholder="Category name..." className="w-full px-4 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-transparent focus:border-indigo-600 transition-all" value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})} />
+          <div className="flex gap-2 items-center">
+            <div className="relative group">
+               <button className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg">{newCat.icon}</button>
+               <div className="absolute bottom-full left-0 mb-2 p-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 hidden group-hover:grid grid-cols-4 gap-1 w-48 z-50">
+                  {EMOJI_OPTIONS.map(emoji => (
+                    <button key={emoji} onClick={() => setNewCat({...newCat, icon: emoji})} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-lg transition-transform hover:scale-125">{emoji}</button>
+                  ))}
+               </div>
+            </div>
+            <input type="color" className="w-10 h-10 rounded-xl p-0 border-none bg-transparent cursor-pointer" value={newCat.color} onChange={e => setNewCat({...newCat, color: e.target.value})} />
+            <button onClick={() => { if(newCat.name) onAdd({...newCat, id: crypto.randomUUID()}); setNewCat({name:'', color:'#6366f1', type:'expense', icon:'🏷️'}); }} className="flex-1 bg-indigo-600 text-white text-xs font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20">Create ✨</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FullHistoryPage({ transactions, categories, filters, dispatch, theme, onClose, onEdit }) {
+  const [localSearch, setLocalSearch] = useState(filters.search);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('newest');
+
+  const filtered = useMemo(() => {
+    let result = transactions.filter(t => {
+      const matchesSearch = t.title.toLowerCase().includes(localSearch.toLowerCase());
+      const matchesType = typeFilter === 'all' || t.type === typeFilter;
+      const matchesCategory = categoryFilter === 'all' || t.categoryId === categoryFilter;
+      return matchesSearch && matchesType && matchesCategory;
+    });
+    result.sort((a, b) => sortOrder === 'newest'
+      ? new Date(b.date) - new Date(a.date)
+      : new Date(a.date) - new Date(b.date)
+    );
+    return result;
+  }, [transactions, localSearch, typeFilter, categoryFilter, sortOrder]);
+
+  const totalIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+  const totalExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+
+  // Group transactions by date
+  const grouped = useMemo(() => {
+    const groups = {};
+    filtered.forEach(t => {
+      const dateKey = new Date(t.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(t);
+    });
+    return groups;
+  }, [filtered]);
+
+  return (
+    <div className="fixed inset-0 z-[90] flex flex-col bg-slate-50 dark:bg-slate-950 animate-in slide-in-from-bottom duration-300">
+      {/* Header */}
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onClose} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-all active:scale-95">
+              <X size={22} />
+            </button>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">Full History 📋</h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{filtered.length} transaction{filtered.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSortOrder(s => s === 'newest' ? 'oldest' : 'newest')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-all active:scale-95">
+              <Calendar size={16} /> {sortOrder === 'newest' ? 'Newest' : 'Oldest'}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Filter Bar */}
+      <div className="max-w-5xl mx-auto w-full px-6 py-5">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search transactions..."
+              className="w-full pl-11 pr-5 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:border-indigo-600 text-base font-semibold transition-all"
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            {['all', 'income', 'expense'].map(t => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`px-5 py-3.5 rounded-2xl text-sm font-black uppercase tracking-wider transition-all active:scale-95 ${
+                  typeFilter === t
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                    : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800 hover:border-indigo-300'
+                }`}
+              >
+                {t === 'all' ? 'All' : t === 'income' ? 'Income 💰' : 'Expense 💸'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Category filter chips */}
+        <div className="flex flex-wrap gap-2.5 mt-4">
+          <button
+            onClick={() => setCategoryFilter('all')}
+            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+              categoryFilter === 'all' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'bg-white dark:bg-slate-900 text-slate-400 border border-slate-200 dark:border-slate-800'
+            }`}
+          >All Categories</button>
+          {categories.map(c => (
+            <button
+              key={c.id}
+              onClick={() => setCategoryFilter(c.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                categoryFilter === c.id ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'bg-white dark:bg-slate-900 text-slate-400 border border-slate-200 dark:border-slate-800'
+              }`}
+            >{c.icon} {c.name}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary Bar */}
+      <div className="max-w-5xl mx-auto w-full px-6 pb-5">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Income</p>
+            <p className="text-xl font-black text-emerald-500 tracking-tight"><Currency value={totalIncome} /></p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Expenses</p>
+            <p className="text-xl font-black text-rose-500 tracking-tight"><Currency value={totalExpense} /></p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Net</p>
+            <p className={`text-xl font-black tracking-tight ${totalIncome - totalExpense >= 0 ? 'text-indigo-600' : 'text-rose-500'}`}>
+              <Currency value={totalIncome - totalExpense} />
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Transaction List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar pb-8">
+        <div className="max-w-5xl mx-auto px-6 space-y-8">
+          {Object.keys(grouped).length > 0 ? (
+            Object.entries(grouped).map(([date, txns]) => (
+              <div key={date}>
+                <div className="flex items-center gap-3 mb-4">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">{date}</p>
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+                  <p className="text-xs font-bold text-slate-400 tnum whitespace-nowrap">{txns.length} record{txns.length !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="space-y-3">
+                  {txns.map((t) => {
+                    const category = categories.find(c => c.id === t.categoryId);
+                    return (
+                      <div
+                        key={t.id}
+                        className="group flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all hover:shadow-md cursor-pointer"
+                        onClick={() => onEdit(t)}
+                      >
+                        <div className="flex items-center gap-5">
+                          <div
+                            className="w-13 h-13 rounded-2xl flex items-center justify-center text-white text-xl shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300"
+                            style={{ backgroundColor: category?.color || '#94a3b8', width: '3.25rem', height: '3.25rem' }}
+                          >
+                            {category?.icon || '🏷️'}
+                          </div>
+                          <div>
+                            <p className="text-base font-black text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">{t.title}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">
+                              {category?.name || 'General'} • {t.type === 'income' ? 'Income' : 'Expense'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`text-base font-black tracking-tighter tnum ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                            {t.type === 'income' ? '+' : '-'} {formatINR(t.amount)}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_TRANSACTION', payload: t.id }); }}
+                            className="opacity-0 group-hover:opacity-100 p-2.5 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <span className="text-6xl mb-5 opacity-40">🔍</span>
+              <p className="font-black text-base uppercase tracking-widest text-slate-400">No transactions found</p>
+              <p className="text-sm text-slate-400 mt-2">Try adjusting your search or filters</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransactionModal({ onClose, categories, editingTransaction, onSave }) {
+  const [form, setForm] = useState(editingTransaction || {
+    title: '', amount: '', type: 'expense', categoryId: categories[0]?.id || '', date: new Date().toISOString().split('T')[0]
+  });
+  const [catOpen, setCatOpen] = useState(false);
+  const filteredCats = categories.filter(c => c.type === form.type);
+  const selectedCat = filteredCats.find(c => c.id === form.categoryId) || filteredCats[0];
+  const inc = form.type === 'income';
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 dark:bg-slate-950/70 backdrop-blur-md" onClick={onClose} />
+      <div className="relative w-full max-w-sm flex flex-col">
+        {/* Back button — outside the card */}
+        <button onClick={onClose} className="self-start mb-3 flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 font-semibold text-sm shadow-lg transition-all active:scale-95">
+          <ArrowLeft size={16} /> Back
+        </button>
+        <div className="bg-white dark:bg-slate-900 w-full rounded-[3rem] shadow-2xl p-8 border border-slate-200 dark:border-slate-800 animate-in zoom-in duration-200 transition-all">
+        <h3 className="text-2xl font-black mb-6 flex items-center gap-2 text-slate-900 dark:text-white">{editingTransaction ? 'Edit Transaction ✏️' : 'New Transaction ✨'}</h3>
+        <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] mb-8">
+          <button onClick={() => setForm({...form, type:'expense'})} className={`flex-1 py-3.5 text-sm font-black rounded-2xl transition-all ${form.type==='expense' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>Expense 💸</button>
+          <button onClick={() => setForm({...form, type:'income'})} className={`flex-1 py-3.5 text-sm font-black rounded-2xl transition-all ${form.type==='income' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>Income 🤑</button>
+        </div>
+        <div className="space-y-5">
+          <div>
+             <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Description</label>
+             <input type="text" className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 transition-all font-semibold text-base" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+          </div>
+          <div>
+            <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Amount (₹)</label>
+            <div className="relative">
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">₹</span>
+              <input type="number" className="w-full pl-10 pr-5 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 transition-all font-bold text-xl tnum" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
+              {form.amount && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400/60 pointer-events-none"><Currency value={form.amount} /></span>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+             <div>
+               <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Category</label>
+               <div className="relative">
+                 <button type="button" onClick={() => setCatOpen(!catOpen)} className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl border-2 border-transparent hover:border-indigo-400 focus:border-indigo-500 outline-none font-semibold text-sm flex items-center justify-between transition-all">
+                   <span>{selectedCat?.icon} {selectedCat?.name}</span>
+                   <ChevronDown size={15} className={`text-slate-400 transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`} />
+                 </button>
+                 {catOpen && (
+                   <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-150">
+                     {filteredCats.map(c => (
+                       <button key={c.id} type="button" onClick={() => { setForm({...form, categoryId: c.id}); setCatOpen(false); }} className={`w-full px-4 py-3.5 text-left text-sm font-semibold transition-all flex items-center gap-2 ${form.categoryId === c.id ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                         <span>{c.icon}</span> {c.name}
+                       </button>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             </div>
+             <div>
+                <label className="text-xs uppercase font-black tracking-widest text-slate-400 ml-1 mb-2 block">Date</label>
+                <input type="date" className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-400 transition-all font-semibold text-sm" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+             </div>
+          </div>
+        </div>
+        <button onClick={() => onSave(form)} className={`w-full font-black text-lg py-5 rounded-[2rem] shadow-xl mt-10 active:scale-95 transition-all text-white ${inc ? 'bg-emerald-500 shadow-emerald-500/30 hover:bg-emerald-600' : 'bg-rose-500 shadow-rose-500/30 hover:bg-rose-600'}`}>Complete Entry ✅</button>
+        </div>{/* end card */}
+      </div>{/* end wrapper */}
+    </div>
+  );
+}
