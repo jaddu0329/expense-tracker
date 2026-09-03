@@ -8,7 +8,7 @@ This template provides a minimal setup to get React working in Vite with HMR and
  [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation)
 
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template]https://github.com/vitejs/vite/tree/main/packages/create-vite
