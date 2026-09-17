@@ -1,4 +1,4 @@
-# React 
+# React + vite 
 
 This template provides a minimal setup to get React working 
 
