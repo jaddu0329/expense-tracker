@@ -1,6 +1,6 @@
 # React + vite 
 
-This template provides a minimal setup to get
+This template provides a minimal setup to get code 
 
  
 
