@@ -1,4 +1,4 @@
-This template provides a minimal setup to download get this
+This template provides a minimal setup to download get this site
 
 
  
